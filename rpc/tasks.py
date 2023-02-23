@@ -1,9 +1,11 @@
 import pika
+import sys
 
 
 def send_request(body:str) -> None:
     """
     https://www.rabbitmq.com/tutorials/tutorial-one-python.html
+    https://www.rabbitmq.com/tutorials/tutorial-two-python.html
 
     """
 
@@ -14,13 +16,17 @@ def send_request(body:str) -> None:
     )
     connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
-    channel.queue_declare(queue='hello')
+    channel.queue_declare(queue='task_queue', durable=True)
     channel.basic_publish(exchange='',
-                          routing_key='hello',
-                          body=body)
-    print(" [x] Sent 'Hello World!'")
+                          routing_key="task_queue",
+                          body=body,
+                          properties=pika.BasicProperties(
+                              delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
+                          ))
+    print(f" [x] Sent {body}")
     connection.close()
 
 
 if __name__ == '__main__':
-    send_request('Hi, Weber!')
+    input = ' '.join(sys.argv[1:]) or 'Hi, Weber!'
+    send_request(input)
